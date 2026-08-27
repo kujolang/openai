@@ -1,0 +1,3 @@
+from openai import create_client, client_responses
+client := create_client({})
+print(client_responses(client, {"model":"gpt-5.5","input":"Hello from Kujo!"}))
