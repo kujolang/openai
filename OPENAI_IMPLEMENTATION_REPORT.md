@@ -50,7 +50,7 @@ Pure descriptor and decoder hooks; no network I/O or transport/retry/budget poli
 
 ## Clean-Room Install / Installed Consumer Smoke
 
-Pending immutable tag validation.
+Passed with Kujo v1.0.2, including immutable Kennel add/install/reinstall/validate and installed consumer smoke with `KUJO_MODULE_PATH` unset.
 
 ## Live Validation
 

@@ -9,5 +9,5 @@ Evidence date: 2026-08-27. Contract: v1.0.1.
 | Deterministic tests | PASS | release gate |
 | Immutable AI SDK dependency | PASS | Kennel pins `v1.1.0` |
 | Streaming | PASS | SSE parser and driver hook |
-| Clean-room distribution | PENDING | Run after tag |
-| Remote release | PENDING | Run after gates |
+| Clean-room distribution | PASS | Kujo v1.0.2 add/install/reinstall/validate and installed consumer smoke passed |
+| Remote release | PASS | `kujolang/openai` tag `v0.1.0` and commit verified |
