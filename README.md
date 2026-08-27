@@ -9,7 +9,10 @@ Native OpenAI Responses API support for Kujo, with normalized AI SDK integration
 ## Install
 
 ```bash
-kujo run /path/to/kennel/kennel.kujo --interpreter -- add github:kujolang/openai@v0.1.2 --alias openai
+kujo run /path/to/kennel/kennel.kujo \
+  --interpreter \
+  -- add github:kujolang/openai@v0.1.2 \
+  --alias openai
 kujo run /path/to/kennel/kennel.kujo --interpreter -- install
 export OPENAI_API_KEY=your-key
 ```
