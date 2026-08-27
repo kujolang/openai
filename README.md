@@ -18,8 +18,15 @@ export OPENAI_API_KEY=your-key
 
 ```kujo
 from openai import create_client, client_responses
+
 client := create_client({})
-result := client_responses(client, {"model":"gpt-5.5","input":"Hello from Kujo!"})
+request := {
+    "model": "gpt-5.5",
+    "input": "Hello from Kujo!"
+}
+
+result := client_responses(client, request)
+
 print(result["data"]["output"][0]["content"][0]["text"])
 ```
 
