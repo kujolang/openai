@@ -1,0 +1,34 @@
+# Native OpenAI Responses API client. Transport is injectable.
+func get(o,k,f) { if type(o)=="dict" && has_key(o,k) { return o[k] }; return f }
+func trim_slash(v) { r:=trim(v); while ends_with(r,"/") { r:=substring(r,0,len(r)-1) }; return r }
+func redact(v,s) { if type(v)=="string" && type(s)=="string" && s!="" { return replace(v,s,"[REDACTED]") }; return v }
+func valid(v) { if type(v)!="string" || trim(v)=="" { return "OpenAI base URL must be non-empty." }; r:=trim_slash(v); p:=split(r,"/"); if len(p)<3 || contains(r,"@") || contains(r,"?") || contains(r,"#") || contains(r,"\r") || contains(r,"\n") { return "OpenAI base URL is unsafe." }; if starts_with(lower(r),"https://") { return "" }; return "OpenAI remote endpoints must use HTTPS." }
+func create_client_impl(config) { if type(config)!="dict" { config:={} }; base:=trim_slash(get(config,"base_url","https://api.openai.com/v1")); key:=get(config,"api_key",null); if type(key)=="null" { key:=env("OPENAI_API_KEY") }; if type(key)!="string" { key:="" }; return {"base_url":base,"api_key":key,"timeout":get(config,"timeout",60.0),"transport":get(config,"transport",null),"validation_error":valid(base)} }
+func transport_for(c) { if type(get(c,"transport",null))=="function" { return c["transport"] }; return http_request }
+func request(c,path,payload,stream) {
+	if c["validation_error"]!="" { return {"ok":false,"message":c["validation_error"]} }
+	if c["api_key"]=="" { return {"ok":false,"message":"OpenAI API key is required."} }
+	o:={"method":"POST","timeout":c["timeout"],"_headers":{"Authorization":"Bearer "+c["api_key"],"Content-Type":"application/json"}}
+	if type(payload)=="dict" { o["_body"]:=to_json(payload) }; if stream { o["stream"]:=true }
+	t:=transport_for(c); result:=t(c["base_url"]+path,o)
+	match result {
+		case Err(e): { return {"ok":false,"message":redact(to_string(e),c["api_key"])} }
+		case Ok(resp): {
+			status:=get(resp,"_status",get(resp,"status",0)); body:=get(resp,"_body",get(resp,"body","")); d:=null
+			try { d:=parse_json(body) } except e { d:=null }
+			if status<200 || status>299 { return {"ok":false,"status_code":status,"message":redact(to_string(get(get(d,"error",{}),"message","OpenAI request failed")),c["api_key"]),"error_body":redact(body,c["api_key"])} }
+			if type(d)=="null" && !stream { return {"ok":false,"message":"Malformed OpenAI JSON response."} }
+			return {"ok":true,"status_code":status,"data":d,"response":resp}
+		}
+	}
+}
+func responses_with_client(c,options) { return request(c,"/responses",options,false) }
+func stream_responses_with_client(c,options) { return request(c,"/responses",options,true) }
+func parse_stream_impl(chunks,body) { combined:=""; if type(chunks)=="array" { for c in chunks { combined:=combined+c } } else { combined:=body }; events:=[]; for block in split(combined,"\n\n") { for line in split(block,"\n") { if starts_with(line,"data:") { raw:=trim(substring(line,5,len(line))); if raw=="[DONE]" { continue }; d:=null; try { d:=parse_json(raw) } except e { return {"ok":false,"events":[]} }; events=push(events,d) } } }; return {"ok":true,"events":events} }
+export create_client:=create_client_impl
+export responses:=func(options) { return responses_with_client(create_client_impl({}),options) }
+export client_responses:=responses_with_client
+export client_stream_responses:=stream_responses_with_client
+export list_models:=func() { c:=create_client_impl({}); t:=transport_for(c); return t(c["base_url"]+"/models",{"method":"GET","timeout":c["timeout"],"_headers":{"Authorization":"Bearer "+c["api_key"]}}) }
+export embeddings:=func(options) { return request(create_client_impl({}),"/embeddings",options,false) }
+export parse_stream:=parse_stream_impl

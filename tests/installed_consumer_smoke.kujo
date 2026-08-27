@@ -1,0 +1,2 @@
+test_setup { from openai import create_client, client_responses, openai_provider }
+test "installed exports resolve" { c:=create_client({"api_key":"fixture","transport":func(url,o) { return Ok({"_status":200,"_body":"{\"output_text\":\"installed\"}"}) }}); assert_true(client_responses(c,{})["ok"]); assert_equal(type(openai_provider({})),"dict") }

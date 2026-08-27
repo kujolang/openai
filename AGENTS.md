@@ -1,0 +1,1 @@
+Public exports are in `openai.kujo`. Native Responses API code is `src/openai.kujo`; the AI SDK driver is `src/provider.kujo`. Run `bash scripts/release_quality_gate.sh`. Keep OpenAI response items and native metadata intact; do not alter AI SDK core or add secrets.
